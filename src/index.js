@@ -21,8 +21,8 @@ let observer = new IntersectionObserver(onLoad, options);
 
 let value = '';
 let total = 0;
-let page = 1;
 let galleryModal = '';
+let page = 1;
 
 function onLoad(entries, observer) {
   entries.forEach(entry => {
@@ -104,7 +104,7 @@ function addMarkup(data) {
         downloads,
       }) =>
         `<div class="photo-card">
-              <a href="${largeImageURL}"><img src="${webformatURL}" alt="${tags}"  loading='lazy/></a>
+   <a href="${largeImageURL}"><img src="${webformatURL}" alt="${tags}"  loading='lazy/></a>
 
   <div class="info">
     <p class="info-item">
