@@ -5,6 +5,13 @@ import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import './css/styles.css';
 
+const galleryModal = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionClass: 'caption',
+  captionDelay: 250,
+  scrollZoom: false,
+});
+
 const form = document.querySelector('.search-form');
 const gallery = document.querySelector('.gallery');
 const guard = document.querySelector('.js-guard');
@@ -21,7 +28,6 @@ let observer = new IntersectionObserver(onLoad, options);
 
 let value = '';
 let total = 0;
-let galleryModal = '';
 let page = 1;
 
 function onLoad(entries, observer) {
@@ -36,8 +42,9 @@ function onLoad(entries, observer) {
           gallery.insertAdjacentHTML('beforeend', addMarkup(data.hits));
           galleryModal.refresh();
 
-          if (total >= data.totalHits) {
+          if (page > Math.ceil(data.totalHits / 40)) {
             observer.unobserve(guard);
+
             Notify.info(
               "We're sorry, but you've reached the end of search results."
             );
@@ -51,6 +58,10 @@ function onLoad(entries, observer) {
 async function onFetchPictures(e) {
   e.preventDefault();
 
+  value = form.searchQuery.value.trim();
+  total = 0;
+  page = 1;
+
   if (e.currentTarget.elements.searchQuery.value === '') {
     Notify.failure('Enter something to search');
     gallery.innerHTML = '';
@@ -59,28 +70,18 @@ async function onFetchPictures(e) {
     return;
   }
 
-  if (form.searchQuery.value.trim() !== value) {
-    observer.unobserve(guard);
-    gallery.innerHTML = '';
-    value = form.searchQuery.value.trim();
-    total = 0;
-    page = 1;
-  }
   try {
     const response = await fetchPictures(value, page);
     if (response.totalHits) {
       Notify.success(`Hooray! We found ${response.totalHits} images.`);
-      gallery.insertAdjacentHTML('beforeend', addMarkup(response.hits));
-
-      galleryModal = new SimpleLightbox('.gallery a', {
-        captionsData: 'alt',
-        captionClass: 'caption',
-        captionDelay: 250,
-        scrollZoom: false,
-      });
+      gallery.innerHTML = addMarkup(response.hits);
+      galleryModal.refresh();
 
       total += response.hits.length;
-      observer.observe(guard);
+
+      if (page < Math.ceil(response.totalHits / 40)) {
+        observer.observe(guard);
+      }
     } else {
       Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
@@ -104,7 +105,7 @@ function addMarkup(data) {
         downloads,
       }) =>
         `<div class="photo-card">
-   <a href="${largeImageURL}"><img src="${webformatURL}" alt="${tags}"  loading='lazy/></a>
+   <a href="${largeImageURL}"><img src="${webformatURL}" alt="${tags}"  loading="lazy"/></a>
 
   <div class="info">
     <p class="info-item">
